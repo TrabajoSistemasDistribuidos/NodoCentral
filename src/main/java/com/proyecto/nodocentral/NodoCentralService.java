@@ -20,23 +20,23 @@ public class NodoCentralService {
     public void start() {
         try (ZContext context = new ZContext()) {
 
-            //Creamos un socket PUSH para enviar los numeros aleatorios a los sockets PULL de los nodos trabajadores
+            // Creamos un socket PUSH para enviar los numeros aleatorios a los sockets PULL de los nodos trabajadores
             ZMQ.Socket ventilator = context.createSocket(ZMQ.PUSH);
-            //Enlazamos el socket al puerto 5557 para enviar los números a los nodos trabajadores
+            // Enlazamos el socket al puerto 5557 para enviar los números a los nodos trabajadores
             ventilator.bind("tcp://*:5557");
 
-            //Creamos un socket PULL para recibir los resultados de los sockets PUSH de los nodos trabajadores
+            // Creamos un socket PULL para recibir los resultados de los sockets PUSH de los nodos trabajadores
             ZMQ.Socket sink = context.createSocket(ZMQ.PULL);
-            //Enlazamos el socket al puerto 5558 para recibir los resultados de los nodos trabajadores
+            // Enlazamos el socket al puerto 5558 para recibir los resultados de los nodos trabajadores
             sink.bind("tcp://*:5558");
 
-            //Asociamos la lista de numeros aleatorios a una variable
+            // Asociamos la lista de numeros aleatorios a una variable
             List<Integer> numbers = generarNumerosAleatorios(NUMBERS_COUNT);
 
-            //Creamos un pool de hilos para enviar los números a los nodos trabajadores en paralelo
+            // Creamos un pool de hilos para enviar los números a los nodos trabajadores en paralelo
             ExecutorService executorService = Executors.newFixedThreadPool(NUM_WORKERS);
 
-            //Bucle para enviar los números a los nodos trabajadores
+            // Bucle para enviar los números a los nodos trabajadores
             for (int i = 0; i < NUM_WORKERS; i++) {
                 final int workerId = i;
                 executorService.submit(() -> {
@@ -48,21 +48,23 @@ public class NodoCentralService {
                 });
             }
 
-            //Cerramos el pool de hilos
+            // Cerramos el pool de hilos
             executorService.shutdown();
 
-            //Contador de numeros primos
+            // Contador de numeros primos
             int numeroPrimos = 0;
 
-            //Recibimos los resultados de los nodos trabajadores y contamos los numeros primos
+            // Recibimos los resultados de los nodos trabajadores y contamos los numeros primos
             for (int i = 0; i < NUMBERS_COUNT; i++) {
                 String resultado = sink.recvStr();
                 if (Boolean.parseBoolean(resultado)) {
                     numeroPrimos++;
                 }
+                // Enunciamos la cantidad de números primos recibidos hasta el momento
+                System.out.println("Cantidad de números primos hasta ahora: " + numeroPrimos);
             }
 
-            //Mostramos el total de numeros primos
+            // Mostramos el total de numeros primos
             System.out.println("Total de números primos: " + numeroPrimos);
         }
     }
